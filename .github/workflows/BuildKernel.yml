@@ -1,0 +1,47 @@
+name: 构建内核
+
+on:
+#  release:
+#    types: [published]
+#  push:
+#    branches:
+#      - master
+#    paths:
+#      - '.config'
+#  schedule:
+#    - cron: 0 8 * * 5
+  watch:
+    types: [started]
+
+jobs:
+  BuildKernel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 环境准备
+        run: |
+          sudo apt update -y
+          sudo apt-get install -y zipalign openssl bc bash git-core gnupg build-essential zip curl make automake autogen autoconf autotools-dev libtool shtool python m4 gcc libtool zlib1g-dev flex libssl-dev gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi python2
+      - name: 拉取源代码和工具链
+        run: |
+          git clone --single-branch --depth=1 https://github.com/Canyang1667/android_kernel_xiaomi_sdm660.git -b lineage-18.1
+          git clone --depth=1 https://github.com/kdrag0n/proton-clang clang -b master
+          git clone --depth=1 https://github.com/Canyang1667/AnyKernel3
+      - name: 构建内核
+        run: |
+          CLANG_DIR=../clang
+          export KBUILD_BUILD_USER="Flicker372"
+          export KBUILD_BUILD_HOST="Github-Actions-Host"
+          args="O=../out ARCH=arm64 CC=${CLANG_DIR}/bin/clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- "
+          cd android_kernel_xiaomi_sdm660
+          make ${args} platina_defconfig
+          make -j$(nproc --all) ${args}
+      - name: 上传内核
+        run: |
+          cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+          cd AnyKernel3
+          VERSION="$(cat ../android_kernel_xiaomi_sdm660/arch/arm64/configs/platina_defconfig | grep "CONFIG_LOCALVERSION\=" | sed -r 's/.*"(.+)".*/\1/' | sed 's/^.//')"
+          7z a -mx9 ${VERSION}.zip *
+          zipalign -v 4 ${VERSION}.zip ../${VERSION}_platina.zip
+          cd ..
+          curl -sL https://git.io/file-transfer | bash -s beta
+          ./transfer wet ${VERSION}_platina.zip
