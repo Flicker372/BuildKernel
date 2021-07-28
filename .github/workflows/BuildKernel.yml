@@ -32,7 +32,7 @@ jobs:
           CLANG_DIR=../clang
           export KBUILD_BUILD_USER="Flicker372"
           export KBUILD_BUILD_HOST="Github-Actions-Server"
-          args="O=../out ARCH=arm64 CC=${CLANG_DIR}/bin/clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- "
+          args="O=../out ARCH=arm64 CC=${CLANG_DIR}/bin/clang CLANG_TRIPLE=${CLANG_DIR}/bin/aarch64-linux-gnu- CROSS_COMPILE=${CLANG_DIR}/bin/aarch64-linux-gnu- CROSS_COMPILE_ARM32=${CLANG_DIR}/bin/arm-linux-gnueabi- "
           cd android_kernel_xiaomi_sdm660
           make -j$(nproc --all) ${args} platina_defconfig
           make -j$(nproc --all) ${args}
